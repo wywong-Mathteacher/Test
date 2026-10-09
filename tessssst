@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>中學一元一次方程式破案冒險 — 跨平台全能版</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Noto+Sans+TC:wght@400;600;700;900&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --sat: env(safe-area-inset-top, 0px);
+            --sab: env(safe-area-inset-bottom, 0px);
+            --sal: env(safe-area-inset-left, 0px);
+            --sar: env(safe-area-inset-right, 0px);
+        }
+
+        body {
+            font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #0b0e14;
+            background-image: 
+                radial-gradient(circle at 50% 20%, rgba(245, 158, 11, 0.08) 0%, transparent 60%),
+                radial-gradient(circle at 80% 80%, rgba(6, 182, 212, 0.06) 0%, transparent 60%),
+                repeating-linear-gradient(45deg, rgba(15, 23, 42, 0.5) 0px, rgba(15, 23, 42, 0.5) 2px, transparent 2px, transparent 8px);
+            background-attachment: fixed;
+            padding-top: var(--sat);
+            padding-bottom: var(--sab);
+            padding-left: var(--sal);
+            padding-right: var(--sar);
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        .font-tech { font-family: 'Chakra Petch', sans-serif; }
+        .font-mono-math { font-family: 'JetBrains Mono', monospace; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+
+        /* Pushpin Effect */
+        .detective-pin::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #f87171, #dc2626, #991b1b);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.8);
+            z-index: 20;
+        }
+
+        /* Red Rubber Stamp Effect */
+        .stamp-solved {
+            border: 2.5px solid #10b981;
+            color: #10b981;
+            text-transform: uppercase;
+            font-weight: 900;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transform: rotate(-10deg);
+            display: inline-block;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+            animation: stamp-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes stamp-pop {
+            0% { transform: scale(3) rotate(10deg); opacity: 0; }
+            100% { transform: scale(1) rotate(-10deg); opacity: 1; }
+        }
+
+        .stamp-classified {
+            border: 2px dashed #f59e0b;
+            color: #f59e0b;
+            font-weight: 800;
+            padding: 1px 6px;
+            border-radius: 4px;
+            transform: rotate(4deg);
+            display: inline-block;
+        }
+
+        /* Shake animation for error */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-7px); }
+            40%, 80% { transform: translateX(7px); }
+        }
+        .animate-shake { animation: shake 0.35s ease-in-out; }
+
+        /* Pulse Glow Animation */
+        @keyframes pulse-gold {
+            0%, 100% { box-shadow: 0 0 12px rgba(245, 158, 11, 0.2); }
+            50% { box-shadow: 0 0 22px rgba(245, 158, 11, 0.45); }
+        }
+        .glow-gold { animation: pulse-gold 3s infinite ease-in-out; }
+
+        /* Touch Keypad Button Active state */
+        .keypad-btn:active {
+            transform: scale(0.92);
+            background-color: #334155;
+        }
+    </style>
+</head>
+<body class="text-slate-200 min-h-[100dvh] flex flex-col justify-between selection:bg-amber-500 selection:text-black">
+
+    <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-50 hidden"></canvas>
+
+    <header class="border-b border-amber-500/20 bg-slate-950/90 backdrop-blur-md sticky top-0 z-30 shadow-lg">
+        <div class="max-w-7xl mx-auto px-3 py-2.5 sm:px-4 sm:py-3 flex flex-wrap items-center justify-between gap-2 sm:gap-4">
+            
+            <!-- Logo & Active Detective Name -->
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center shadow-md shadow-amber-500/20 ring-1 ring-amber-300/40 shrink-0">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6 text-slate-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-sm sm:text-base md:text-lg font-extrabold tracking-wider text-amber-400 flex items-center gap-1.5 leading-tight">
+                        方程式破案冒險
+                        <span id="header-diff-badge" class="bg-amber-500/20 text-amber-300 text-[10px] sm:text-xs px-1.5 py-0.5 rounded border border-amber-500/40 font-mono">初級</span>
+                    </h1>
+                    <div class="flex items-center gap-1.5 text-[11px] sm:text-xs text-slate-400">
+                        <span>偵探：</span>
+                        <span id="header-detective-name" class="font-bold text-amber-300 truncate max-w-[100px] sm:max-w-[160px]">偵探 X</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats HUD (Score, Timer, Leaderboard, Mute, Restart) -->
+            <div class="flex items-center gap-1.5 sm:gap-3">
+                <!-- Score Counter -->
+                <div class="bg-slate-900 border border-slate-800 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg flex items-center gap-1.5 shadow-inner">
+                    <span class="text-[10px] sm:text-xs text-slate-400 font-semibold">積分</span>
+                    <span id="score-display" class="font-tech text-base sm:text-xl text-amber-400 font-bold tracking-wider">0000</span>
+                </div>
+
+                <!-- Timer -->
+                <div id="timer-box" class="bg-slate-900 border border-slate-800 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg flex items-center gap-1.5 transition-colors">
+                    <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span id="timer-display" class="font-tech text-base sm:text-xl text-cyan-400 font-bold tracking-wider">03:00</span>
+                </div>
+
+                <!-- Leaderboard Button -->
+                <button id="open-leaderboard-btn" class="min-w-[38px] min-h-[38px] px-2 py-1.5 text-xs font-semibold rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 transition-all flex items-center justify-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    <span class="hidden md:inline">榮譽榜</span>
+                </button>
+
+                <!-- Sound Mute -->
+                <button id="sound-btn" class="min-w-[38px] min-h-[38px] p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-amber-400 transition-all flex items-center justify-center" title="靜音/開音">
+                    <svg id="sound-icon-on" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M11 5L6 9H2v6h4l5 4V5z"></path>
+                    </svg>
+                    <svg id="sound-icon-off" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
+                    </svg>
+                </button>
+
+                <!-- Restart -->
+                <button id="restart-btn" class="min-w-[38px] min-h-[38px] p-2 sm:px-2.5 sm:py-1.5 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition-all flex items-center justify-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    <span class="hidden sm:inline">重置</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-3 py-4 sm:px-4 sm:py-6 flex-grow w-full grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
+
+        <!-- LEFT PANEL: Active Case & Math Solving Area (7 Cols) -->
+        <section class="lg:col-span-7 flex flex-col gap-4">
+
+            <div class="bg-slate-900/95 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-2xl relative overflow-hidden backdrop-blur-md">
+                
+                <!-- Case Metadata Header -->
+                <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5 mb-3.5">
+                    <div class="flex items-center gap-2">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-400 mr-1.5 animate-pulse"></span>
+                            案件調查中
+                        </span>
+                        <span id="case-number-badge" class="font-mono text-xs text-slate-400">CASE #01 / 05</span>
+                    </div>
+                    <div class="text-[11px] sm:text-xs font-mono text-slate-400">
+                        代數類型：<span class="text-amber-400 font-bold">ax + b = c</span>
+                    </div>
+                </div>
+
+                <!-- Case Narrative -->
+                <div class="mb-3.5">
+                    <h2 id="case-title" class="text-base sm:text-lg md:text-xl font-bold text-slate-100 mb-1.5 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <span id="case-title-text">載入案件中...</span>
+                    </h2>
+                    <p id="case-description" class="text-slate-300 text-xs sm:text-sm leading-relaxed bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+                        請解開下列方程式，求出未知數 x 的正確數值，即可破解嫌犯秘密情報線索！
+                    </p>
+                </div>
+
+                <!-- Main Target Math Equation Display Box -->
+                <div class="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 p-4 sm:p-6 rounded-2xl border border-amber-500/30 text-center my-2 shadow-inner glow-gold">
+                    <p class="text-[10px] sm:text-xs text-amber-400/80 font-mono tracking-widest uppercase mb-1">TARGET EQUATION CODE</p>
+                    <div id="equation-display" class="font-mono-math text-2xl sm:text-4xl md:text-5xl font-extrabold text-amber-300 tracking-wider py-1">
+                        ax + b = c
+                    </div>
+                </div>
+
+                <!-- Answer Input & Control -->
+                <form id="answer-form" class="mt-4 flex flex-col gap-3">
+                    <div class="flex items-center gap-2">
+                        <div class="relative flex-grow">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-amber-400 font-mono font-bold text-lg">
+                                x =
+                            </div>
+                            <!-- input mode decimal allows OS numpad if soft keyboard used -->
+                            <input 
+                                type="text" 
+                                id="answer-input" 
+                                inputmode="decimal"
+                                placeholder="點擊輸入數值..." 
+                                readonly
+                                class="w-full pl-12 pr-10 py-3 bg-slate-950 border-2 border-slate-700 rounded-xl text-xl font-mono text-amber-300 focus:outline-none focus:border-amber-400 transition-all shadow-inner placeholder:text-slate-600 cursor-pointer"
+                            >
+                            <button 
+                                type="button"
+                                id="clear-input-btn"
+                                class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <!-- Keyboard Mode Switcher -->
+                        <button 
+                            type="button" 
+                            id="toggle-keypad-btn"
+                            class="px-3 py-3 bg-slate-800 border border-slate-700 text-amber-300 rounded-xl text-xs font-semibold shrink-0 hover:bg-slate-700 active:scale-95 transition-all flex items-center gap-1"
+                            title="切換螢幕數字小鍵盤"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                            <span id="keypad-toggle-text">按鈕鍵盤</span>
+                        </button>
+                    </div>
+
+                    <!-- On-Screen Virtual Touch Keypad (Optimized for iPad & Mobile) -->
+                    <div id="virtual-keypad" class="bg-slate-950 p-3 rounded-2xl border border-slate-800 grid grid-cols-4 gap-2 text-center my-1 shadow-2xl">
+                        <button type="button" data-key="1" class="keypad-btn min-h-[46px] py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-lg font-mono font-bold text-slate-200 shadow">1</button>
+                        <button type="button" data-key="2" class="keypad-btn min-h-[46px] py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-lg font-mono font-bold text-slate-200 shadow">2</button>
+                        <button type="button" data-key="3" class="keypad-btn min-h-[46px] py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-lg font-mono font-bold text-slate-200 shadow">3</button>
+                        <button type="button" data-key="BACK" class="keypad-btn min-h-[46px] py-2.5 rounded-xl bg-red-950/40 border border-red-800/60 text-red-300 font-bold text-sm shadow flex items-center justify-center">⌫</button>
+
+                        <button type="button" data-key="4" class="keypad-btn min-h-[46px] py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-lg font-mono font-bold text-slate-200 shadow">4</button>
+                        <button type="button" data-key="5" class="keypad-btn min-h-[46px] py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-lg font-mono font-bold text-slate-200 shadow">5</button>
+                        <button type="button" data-key="6" class="keypad-btn min-h-[46px] py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-lg font-mono font-bold text-slate-200 shadow">6</button>
+                        <button type="button" data-key="MINUS" class="keypad-btn min-h-[46px] py-2.5 rounded-xl bg-slate-800 border border-slate-600 text-amber-400 font-bold text-lg shadow">-</button>
+
+                        <button type="button" data-key="7" class="keypad-btn min-h-[46px] py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-lg font-mono font-bold text-slate-200 shadow">7</button>
+                        <button type="button" data-key="8" class="keypad-btn min-h-[46px] py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-lg font-mono font-bold text-slate-200 shadow">8</button>
+                        <button type="button" data-key="9" class="keypad-btn min-h-[46px] py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-lg font-mono font-bold text-slate-200 shadow">9</button>
+                        <button type="button" data-key="CLEAR" class="keypad-btn min-h-[46px] py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 font-bold text-xs shadow">C</button>
+
+                        <button type="button" data-key="0" class="keypad-btn col-span-2 min-h-[46px] py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-lg font-mono font-bold text-slate-200 shadow">0</button>
+                        <button type="submit" id="submit-btn" class="col-span-2 min-h-[46px] py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-base shadow-lg shadow-amber-500/20 active:scale-95 transition-all flex items-center justify-center gap-1.5">
+                            <span>破譯送出</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 5l7 7-m0 0l-7 7m7-7H3"></path></svg>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Feedback & Dynamic Step-by-step Hint Box -->
+                <div id="feedback-box" class="mt-3 hidden p-3.5 rounded-xl border text-xs sm:text-sm leading-relaxed transition-all"></div>
+            </div>
+
+            <!-- Math Guide Tip -->
+            <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-3.5 text-xs text-slate-400 flex items-start gap-2.5">
+                <div class="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <div>
+                    <p class="font-bold text-slate-300 mb-0.5">解題技巧指南：</p>
+                    <p>1. <span class="text-amber-300">移項變號</span>：將常數項移至等號另一邊，加號變減號，減號變加號。</p>
+                    <p>2. <span class="text-amber-300">同除係數</span>：兩邊同時除以未知數 x 的前置係數 a，即可算出答案。</p>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- RIGHT PANEL: Evidence Pinboard Wall (5 Cols) -->
+        <section class="lg:col-span-5 flex flex-col gap-4">
+
+            <div class="bg-slate-900/95 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-2xl flex flex-col h-full backdrop-blur-md">
+                <!-- Board Title -->
+                <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                        </svg>
+                        <h3 class="font-bold text-slate-200 text-sm sm:text-base">證物線索展覽牆</h3>
+                    </div>
+                    <span id="clue-progress-text" class="text-[11px] font-mono text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-800/50">
+                        0 / 5 線索
+                    </span>
+                </div>
+
+                <!-- Clues Container Cards -->
+                <div id="clues-container" class="space-y-3 flex-grow">
+                    <!-- Cards populated dynamically by JS -->
+                </div>
+
+                <!-- Suspect Lock Status -->
+                <div class="mt-4 p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-xl bg-slate-900 border-2 border-slate-700 flex items-center justify-center shrink-0 relative overflow-hidden">
+                        <svg class="w-7 h-7 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                        <div id="suspect-silhouette" class="absolute inset-0 bg-slate-950/90 flex items-center justify-center font-mono text-lg font-bold text-amber-400">
+                            ?
+                        </div>
+                    </div>
+                    <div>
+                        <div id="suspect-status-title" class="text-xs text-amber-400 font-mono font-bold">嫌犯鎖定進度: 0%</div>
+                        <div id="suspect-status-desc" class="text-[11px] text-slate-300 mt-0.5 leading-tight">解開線索還原嫌犯特徵與動機</div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- WELCOME / NAME INPUT MODAL -->
+    <div id="name-modal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border-2 border-amber-500/60 rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl relative overflow-hidden glow-gold max-h-[95dvh] overflow-y-auto">
+            <div class="text-center mb-5">
+                <div class="w-14 h-14 mx-auto mb-2.5 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/40">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 012-2h2a2 2 0 012 2v1m-4 0h4"></path></svg>
+                </div>
+                <h2 class="text-xl sm:text-2xl font-black text-amber-400">偵探身份登錄</h2>
+                <p class="text-slate-300 text-xs mt-1">請輸入代號並選擇案情難度等級</p>
+            </div>
+
+            <form id="name-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">偵探名字 / 代號</label>
+                    <input 
+                        type="text" 
+                        id="player-name-input" 
+                        maxlength="12"
+                        placeholder="例如：夏洛克" 
+                        required
+                        class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl font-bold text-amber-300 focus:outline-none focus:border-amber-400 text-center text-base sm:text-lg"
+                        autocomplete="off"
+                    >
+                </div>
+
+                <!-- Difficulty Selection -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1.5">選擇案件難度</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="difficulty" value="EASY" checked class="peer sr-only">
+                            <div class="p-2.5 text-center rounded-xl border border-slate-700 bg-slate-950 peer-checked:border-emerald-500 peer-checked:bg-emerald-950/40 peer-checked:text-emerald-300 transition-all">
+                                <div class="font-bold text-xs sm:text-sm">初級</div>
+                                <div class="text-[10px] text-slate-400 mt-0.5">簡單正整數</div>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="difficulty" value="MEDIUM" class="peer sr-only">
+                            <div class="p-2.5 text-center rounded-xl border border-slate-700 bg-slate-950 peer-checked:border-amber-500 peer-checked:bg-amber-950/40 peer-checked:text-amber-300 transition-all">
+                                <div class="font-bold text-xs sm:text-sm">中級</div>
+                                <div class="text-[10px] text-slate-400 mt-0.5">含正負數</div>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="difficulty" value="HARD" class="peer sr-only">
+                            <div class="p-2.5 text-center rounded-xl border border-slate-700 bg-slate-950 peer-checked:border-red-500 peer-checked:bg-red-950/40 peer-checked:text-red-300 transition-all">
+                                <div class="font-bold text-xs sm:text-sm">高級</div>
+                                <div class="text-[10px] text-slate-400 mt-0.5">高係數挑戰</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <button 
+                    type="submit" 
+                    class="w-full py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-extrabold rounded-xl shadow-lg shadow-amber-500/20 active:scale-95 transition-all text-base"
+                >
+                    領取案件任務 (開始解題)
+                </button>
+            </form>
+
+            <div class="mt-4 pt-3 border-t border-slate-800 text-center">
+                <button id="welcome-leaderboard-btn" class="text-xs text-amber-400 hover:underline inline-flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    查看偵探榮譽排行榜
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LEADERBOARD MODAL -->
+    <div id="leaderboard-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+        <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-2xl w-full p-4 sm:p-6 shadow-2xl relative overflow-hidden flex flex-col max-h-[90dvh]">
+            
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                <div class="flex items-center gap-2">
+                    <div class="p-1.5 rounded-lg bg-amber-500/20 text-amber-400">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    </div>
+                    <h3 class="text-base sm:text-lg font-bold text-slate-100">偵探榮譽排行榜 (Top 10)</h3>
+                </div>
+                <button id="close-leaderboard-btn" class="p-2 text-slate-400 hover:text-slate-100">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <!-- Leaderboard Table -->
+            <div class="my-3 overflow-y-auto flex-grow rounded-xl border border-slate-800 bg-slate-950">
+                <table class="w-full text-left text-xs sm:text-sm">
+                    <thead class="bg-slate-900 text-slate-400 font-mono uppercase text-[11px] sticky top-0">
+                        <tr>
+                            <th class="p-2.5 text-center">名號</th>
+                            <th class="p-2.5">偵探姓名</th>
+                            <th class="p-2.5 text-center">難度</th>
+                            <th class="p-2.5 text-right">積分</th>
+                            <th class="p-2.5 text-center">耗時</th>
+                            <th class="p-2.5 text-center">正確率</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-tbody" class="divide-y divide-slate-800/60 font-mono">
+                        <!-- Loaded dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex justify-between items-center pt-2">
+                <button id="clear-leaderboard-btn" class="px-3 py-2 text-xs text-red-400 hover:bg-red-950/40 border border-red-500/30 rounded-lg transition-colors">
+                    清空紀錄
+                </button>
+                <button id="close-leaderboard-bottom-btn" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg">
+                    關閉榜單
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VICTORY MODAL OVERLAY -->
+    <div id="victory-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border-2 border-amber-500/80 rounded-2xl max-w-md w-full p-5 sm:p-6 text-center shadow-2xl relative overflow-hidden glow-gold">
+            <div class="w-16 h-16 mx-auto mb-2 rounded-full bg-gradient-to-tr from-amber-500 to-yellow-300 flex items-center justify-center shadow-lg shadow-amber-500/30">
+                <svg class="w-9 h-9 text-slate-950" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path></svg>
+            </div>
+
+            <span class="stamp-solved text-xs my-1">MISSION ACCOMPLISHED</span>
+            <h2 class="text-xl sm:text-2xl font-black text-amber-400 mt-1">案件順利偵破！</h2>
+            <p class="text-slate-300 text-xs mt-1">恭喜 <span id="victory-player-name" class="font-bold text-amber-300">偵探</span>，你精準運用一元一次方程式破譯線索！</p>
+
+            <div class="my-4 bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2 text-xs text-left font-mono">
+                <div class="flex justify-between border-b border-slate-800 pb-1.5">
+                    <span class="text-slate-400 font-sans">榮譽稱號：</span>
+                    <span id="final-rank" class="font-bold text-amber-400">首席數學神探</span>
+                </div>
+                <div class="flex justify-between border-b border-slate-800 pb-1.5">
+                    <span class="text-slate-400 font-sans">總計積分：</span>
+                    <span id="final-score" class="font-bold text-cyan-400 text-sm">0</span>
+                </div>
+                <div class="flex justify-between border-b border-slate-800 pb-1.5">
+                    <span class="text-slate-400 font-sans">剩餘時間：</span>
+                    <span id="final-time" class="text-slate-200">00:00</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-400 font-sans">答題正確率：</span>
+                    <span id="final-accuracy" class="text-emerald-400">100%</span>
+                </div>
+            </div>
+
+            <div class="flex gap-2">
+                <button id="victory-leaderboard-btn" class="w-1/2 py-3 bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold rounded-xl border border-amber-500/30 text-xs">
+                    查看榜單
+                </button>
+                <button id="victory-restart-btn" class="w-1/2 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold rounded-xl shadow-lg shadow-amber-500/20 text-xs">
+                    再次挑戰
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GAME OVER MODAL -->
+    <div id="gameover-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border-2 border-red-500/80 rounded-2xl max-w-md w-full p-6 text-center shadow-2xl relative overflow-hidden">
+            <div class="w-14 h-14 mx-auto mb-2 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center border border-red-500/40">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <h2 class="text-xl font-bold text-red-400">調查時間截止！</h2>
+            <p class="text-slate-300 text-xs mt-2">嫌犯已逃離現場，線索中斷。請整理邏輯重試！</p>
+
+            <button id="gameover-restart-btn" class="mt-5 w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold rounded-xl border border-slate-700 transition-all text-xs">
+                重新啟動調查
+            </button>
+        </div>
+    </div>
+
+    <script>
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) this.ctx = new AudioCtx();
+                }
+            }
+
+            playClick() {
+                if (this.muted) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(550, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(750, this.ctx.currentTime + 0.04);
+
+                gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.04);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.04);
+            }
+
+            playCorrect() {
+                if (this.muted) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.value = freq;
+
+                    const startTime = this.ctx.currentTime + (idx * 0.07);
+                    gain.gain.setValueAtTime(0.15, startTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.22);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(startTime);
+                    osc.stop(startTime + 0.22);
+                });
+            }
+
+            playWrong() {
+                if (this.muted) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(160, this.ctx.currentTime);
+                osc.frequency.linearRampToValueAtTime(100, this.ctx.currentTime + 0.22);
+
+                gain.gain.setValueAtTime(0.18, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.22);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.22);
+            }
+
+            playVictory() {
+                if (this.muted) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const arpeggio = [440, 554.37, 659.25, 880, 659.25, 880];
+                arpeggio.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.value = freq;
+
+                    const startTime = this.ctx.currentTime + (idx * 0.1);
+                    gain.gain.setValueAtTime(0.18, startTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.3);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(startTime);
+                    osc.stop(startTime + 0.3);
+                });
+            }
+        }
+
+        const soundFX = new SoundEngine();
+
+        class LeaderboardManager {
+            constructor() {
+                this.STORAGE_KEY = 'detective_math_leaderboard_v2';
+            }
+
+            getRecords() {
+                try {
+                    const data = localStorage.getItem(this.STORAGE_KEY);
+                    return data ? JSON.parse(data) : [];
+                } catch(e) {
+                    return [];
+                }
+            }
+
+            addRecord(name, score, timeUsed, accuracy, diff) {
+                const records = this.getRecords();
+                const now = new Date();
+                const dateStr = `${now.getMonth()+1}/${now.getDate()}`;
+
+                records.push({
+                    name: name || '無名神探',
+                    score: score,
+                    timeUsed: timeUsed,
+                    accuracy: accuracy,
+                    diff: diff || 'EASY',
+                    date: dateStr
+                });
+
+                records.sort((a, b) => b.score - a.score || a.timeUsed - b.timeUsed);
+                const top10 = records.slice(0, 10);
+                try {
+                    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(top10));
+                } catch(e) {}
+                return top10;
+            }
+
+            clear() {
+                try {
+                    localStorage.removeItem(this.STORAGE_KEY);
+                } catch(e) {}
+            }
+
+            renderTable() {
+                const tbody = document.getElementById('leaderboard-tbody');
+                const records = this.getRecords();
+
+                if (records.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="p-5 text-center text-slate-500 font-sans">尚無榜單紀錄，快來完成通關！</td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                tbody.innerHTML = records.map((rec, idx) => {
+                    let rankBadge = `${idx + 1}`;
+                    if (idx === 0) rankBadge = '🥇';
+                    else if (idx === 1) rankBadge = '🥈';
+                    else if (idx === 2) rankBadge = '🥉';
+
+                    const mins = Math.floor(rec.timeUsed / 60);
+                    const secs = rec.timeUsed % 60;
+                    const timeStr = `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+
+                    let diffLabel = '初級';
+                    if (rec.diff === 'MEDIUM') diffLabel = '中級';
+                    if (rec.diff === 'HARD') diffLabel = '高級';
+
+                    return `
+                        <tr class="hover:bg-slate-900 transition-colors">
+                            <td class="p-2.5 text-center font-bold text-amber-400">${rankBadge}</td>
+                            <td class="p-2.5 font-sans font-semibold text-slate-200">${escapeHtml(rec.name)}</td>
+                            <td class="p-2.5 text-center"><span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-amber-300 border border-slate-700">${diffLabel}</span></td>
+                            <td class="p-2.5 text-right font-bold text-cyan-400">${rec.score}</td>
+                            <td class="p-2.5 text-center text-slate-300">${timeStr}</td>
+                            <td class="p-2.5 text-center text-emerald-400">${rec.accuracy}%</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/[&<>"']/g, (m) => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[m]);
+        }
+
+        const CASE_SCENARIOS = [
+            {
+                title: "第一案：莊園密室保險箱",
+                desc: "黑幫保險箱留下代數鎖盤。請解出 x 的數值，解鎖第一塊嫌犯特徵！",
+                clueName: "嫌犯外貌特徵",
+                clueTemplate: (x) => `身高約 178cm，配戴金邊眼鏡 (解碼: ${x})`
+            },
+            {
+                title: "第二案：加密無線電波號碼",
+                desc: "截獲秘密通訊波段。計算未知數 x 即可鎖定嫌犯倉庫據點！",
+                clueName: "犯罪據點位置",
+                clueTemplate: (x) => `舊城區第 ${Math.abs(x) * 3 + 5} 號廢棄碼頭貨櫃倉庫`
+            },
+            {
+                title: "第三案：監視器時間軸截圖",
+                desc: "監視畫面時間碼被竄改。求解方程式能精準還原案發時刻！",
+                clueName: "案發現場時間",
+                clueTemplate: (x) => `深夜 23:${Math.min(59, Math.abs(x * 4) + 10).toString().padStart(2, '0')} 出現於走廊`
+            },
+            {
+                title: "第四案：黑市轉帳硬碟檔案",
+                desc: "攔截異常鉅款轉帳。求解 x 即可取得加密隨身碟動機線索！",
+                clueName: "犯罪動機遺留物",
+                clueTemplate: (x) => `遺留加密硬碟，爭奪金額 $${Math.abs(x) * 1200 + 15000}`
+            },
+            {
+                title: "第五案：幕後主腦身分解碼",
+                desc: "最後一道防火牆！解開最終方程式指引我們逮捕罪魁禍首！",
+                clueName: "幕後主腦代號",
+                clueTemplate: (x) => `代號『千面狐』— 前皇家密碼局高級工程師`
+            }
+        ];
+
+        function generateEquation(index, difficulty) {
+            let x = 0;
+            let a = 1;
+            let b = 0;
+
+            if (difficulty === 'EASY') {
+                x = Math.floor(Math.random() * 10) + 1; // 1 to 10
+                a = Math.floor(Math.random() * 5) + 1;  // 1 to 5
+                b = Math.floor(Math.random() * 15) + 1; // 1 to 15
+            } else if (difficulty === 'MEDIUM') {
+                while (x === 0) x = Math.floor(Math.random() * 21) - 10; // -10 to 10
+                while (a === 0) a = Math.floor(Math.random() * 13) - 6;   // -6 to 6
+                while (b === 0) b = Math.floor(Math.random() * 31) - 15;  // -15 to 15
+            } else { // HARD
+                while (x === 0) x = Math.floor(Math.random() * 31) - 15;  // -15 to 15
+                while (a === 0 || a === 1 || a === -1) a = Math.floor(Math.random() * 21) - 10;
+                while (b === 0) b = Math.floor(Math.random() * 51) - 25;  // -25 to 25
+            }
+
+            const c = a * x + b;
+
+            let aStr = '';
+            if (a === 1) aStr = 'x';
+            else if (a === -1) aStr = '-x';
+            else aStr = `${a}x`;
+
+            let bStr = '';
+            if (b > 0) bStr = `+ ${b}`;
+            else bStr = `- ${Math.abs(b)}`;
+
+            const displayStr = `${aStr} ${bStr} = ${c}`;
+            const scenario = CASE_SCENARIOS[index % CASE_SCENARIOS.length];
+
+            return {
+                a: a,
+                b: b,
+                c: c,
+                x: x,
+                displayStr: displayStr,
+                title: scenario.title,
+                desc: scenario.desc,
+                clueName: scenario.clueName,
+                clueText: scenario.clueTemplate(x)
+            };
+        }
+
+        class GameEngine {
+            constructor() {
+                this.playerName = '偵探 X';
+                this.difficulty = 'EASY';
+                this.casesCount = 5;
+                this.currentCaseIndex = 0;
+                this.score = 0;
+                this.timeLeft = 180;
+                this.timerInterval = null;
+                this.cases = [];
+                this.unlockedClues = [];
+                this.totalAttempts = 0;
+                this.wrongAttempts = 0;
+
+                this.leaderboard = new LeaderboardManager();
+
+                // DOM Elements
+                this.scoreDisplay = document.getElementById('score-display');
+                this.timerDisplay = document.getElementById('timer-display');
+                this.timerBox = document.getElementById('timer-box');
+                this.headerDetectiveName = document.getElementById('header-detective-name');
+                this.headerDiffBadge = document.getElementById('header-diff-badge');
+                this.caseNumberBadge = document.getElementById('case-number-badge');
+                this.caseTitleText = document.getElementById('case-title-text');
+                this.caseDescription = document.getElementById('case-description');
+                this.equationDisplay = document.getElementById('equation-display');
+                this.answerInput = document.getElementById('answer-input');
+                this.feedbackBox = document.getElementById('feedback-box');
+                this.cluesContainer = document.getElementById('clues-container');
+                this.clueProgressText = document.getElementById('clue-progress-text');
+                this.suspectStatusTitle = document.getElementById('suspect-status-title');
+                this.suspectStatusDesc = document.getElementById('suspect-status-desc');
+                this.suspectSilhouette = document.getElementById('suspect-silhouette');
+                this.virtualKeypad = document.getElementById('virtual-keypad');
+
+                this.bindEvents();
+            }
+
+            init() {
+                this.currentCaseIndex = 0;
+                this.score = 0;
+                
+                if (this.difficulty === 'EASY') this.timeLeft = 240;
+                else if (this.difficulty === 'MEDIUM') this.timeLeft = 180;
+                else this.timeLeft = 150;
+
+                this.unlockedClues = [];
+                this.totalAttempts = 0;
+                this.wrongAttempts = 0;
+
+                this.cases = [];
+                for (let i = 0; i < this.casesCount; i++) {
+                    this.cases.push(generateEquation(i, this.difficulty));
+                }
+
+                this.renderClueCards();
+                this.loadCase(0);
+                this.updateScore(0);
+                this.startTimer();
+
+                document.getElementById('victory-modal').classList.add('hidden');
+                document.getElementById('gameover-modal').classList.add('hidden');
+                document.getElementById('confetti-canvas').classList.add('hidden');
+            }
+
+            bindEvents() {
+                // Name Submit Form
+                document.getElementById('name-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    soundFX.playClick();
+                    const val = document.getElementById('player-name-input').value.trim();
+                    if (val) {
+                        this.playerName = val;
+                        localStorage.setItem('last_detective_name', val);
+                    }
+                    
+                    const diffEl = document.querySelector('input[name="difficulty"]:checked');
+                    if (diffEl) this.difficulty = diffEl.value;
+
+                    this.headerDetectiveName.textContent = this.playerName;
+                    
+                    let diffLabel = '初級';
+                    if (this.difficulty === 'MEDIUM') diffLabel = '中級';
+                    if (this.difficulty === 'HARD') diffLabel = '高級';
+                    this.headerDiffBadge.textContent = diffLabel;
+
+                    document.getElementById('name-modal').classList.add('hidden');
+                    this.init();
+                });
+
+                // Virtual Keypad Button handling
+                this.virtualKeypad.addEventListener('click', (e) => {
+                    const btn = e.target.closest('button[data-key]');
+                    if (!btn) return;
+                    soundFX.playClick();
+
+                    const key = btn.getAttribute('data-key');
+                    let currentVal = this.answerInput.value;
+
+                    if (key === 'BACK') {
+                        this.answerInput.value = currentVal.slice(0, -1);
+                    } else if (key === 'CLEAR') {
+                        this.answerInput.value = '';
+                    } else if (key === 'MINUS') {
+                        if (currentVal.startsWith('-')) {
+                            this.answerInput.value = currentVal.substring(1);
+                        } else {
+                            this.answerInput.value = '-' + currentVal;
+                        }
+                    } else if (key !== 'SUBMIT') {
+                        if (currentVal.length < 8) {
+                            this.answerInput.value += key;
+                        }
+                    }
+                });
+
+                // Clear input button
+                document.getElementById('clear-input-btn').addEventListener('click', () => {
+                    soundFX.playClick();
+                    this.answerInput.value = '';
+                });
+
+                // Keypad Toggle Mode (Virtual Numpad vs OS Keyboard)
+                document.getElementById('toggle-keypad-btn').addEventListener('click', () => {
+                    soundFX.playClick();
+                    const isReadOnly = this.answerInput.hasAttribute('readonly');
+                    if (isReadOnly) {
+                        this.answerInput.removeAttribute('readonly');
+                        this.virtualKeypad.classList.add('hidden');
+                        document.getElementById('keypad-toggle-text').textContent = '顯示軟鍵盤';
+                        this.answerInput.focus();
+                    } else {
+                        this.answerInput.setAttribute('readonly', 'true');
+                        this.virtualKeypad.classList.remove('hidden');
+                        document.getElementById('keypad-toggle-text').textContent = '按鈕鍵盤';
+                    }
+                });
+
+                // Answer Form Submit
+                document.getElementById('answer-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.checkAnswer();
+                });
+
+                // Physical Keyboard Support
+                window.addEventListener('keydown', (e) => {
+                    if (document.getElementById('name-modal').classList.contains('hidden') && 
+                        document.getElementById('victory-modal').classList.contains('hidden')) {
+                        if (e.key === 'Enter') {
+                            this.checkAnswer();
+                        }
+                    }
+                });
+
+                // Leaderboard Modals
+                const openLb = () => {
+                    soundFX.playClick();
+                    this.leaderboard.renderTable();
+                    document.getElementById('leaderboard-modal').classList.remove('hidden');
+                };
+                const closeLb = () => {
+                    soundFX.playClick();
+                    document.getElementById('leaderboard-modal').classList.add('hidden');
+                };
+
+                document.getElementById('open-leaderboard-btn').addEventListener('click', openLb);
+                document.getElementById('welcome-leaderboard-btn').addEventListener('click', openLb);
+                document.getElementById('victory-leaderboard-btn').addEventListener('click', openLb);
+                document.getElementById('close-leaderboard-btn').addEventListener('click', closeLb);
+                document.getElementById('close-leaderboard-bottom-btn').addEventListener('click', closeLb);
+
+                document.getElementById('clear-leaderboard-btn').addEventListener('click', () => {
+                    soundFX.playClick();
+                    this.leaderboard.clear();
+                    this.leaderboard.renderTable();
+                });
+
+                // Mute Sound Button
+                document.getElementById('sound-btn').addEventListener('click', () => {
+                    soundFX.muted = !soundFX.muted;
+                    document.getElementById('sound-icon-on').classList.toggle('hidden', soundFX.muted);
+                    document.getElementById('sound-icon-off').classList.toggle('hidden', !soundFX.muted);
+                });
+
+                // Restarts
+                document.getElementById('restart-btn').addEventListener('click', () => {
+                    soundFX.playClick();
+                    this.init();
+                });
+                document.getElementById('victory-restart-btn').addEventListener('click', () => {
+                    soundFX.playClick();
+                    this.init();
+                });
+                document.getElementById('gameover-restart-btn').addEventListener('click', () => {
+                    soundFX.playClick();
+                    this.init();
+                });
+
+                // Restore previous player name
+                const lastName = localStorage.getItem('last_detective_name');
+                if (lastName) {
+                    document.getElementById('player-name-input').value = lastName;
+                }
+            }
+
+            startTimer() {
+                clearInterval(this.timerInterval);
+                this.updateTimerDisplay();
+
+                this.timerInterval = setInterval(() => {
+                    this.timeLeft--;
+                    this.updateTimerDisplay();
+
+                    if (this.timeLeft <= 0) {
+                        clearInterval(this.timerInterval);
+                        this.triggerGameOver();
+                    }
+                }, 1000);
+            }
+
+            updateTimerDisplay() {
+                const mins = Math.floor(this.timeLeft / 60);
+                const secs = this.timeLeft % 60;
+                this.timerDisplay.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+                if (this.timeLeft <= 25) {
+                    this.timerBox.classList.remove('border-slate-800');
+                    this.timerBox.classList.add('border-red-500/80', 'bg-red-950/40', 'animate-pulse');
+                    this.timerDisplay.classList.remove('text-cyan-400');
+                    this.timerDisplay.classList.add('text-red-400');
+                } else {
+                    this.timerBox.classList.add('border-slate-800');
+                    this.timerBox.classList.remove('border-red-500/80', 'bg-red-950/40', 'animate-pulse');
+                    this.timerDisplay.classList.add('text-cyan-400');
+                    this.timerDisplay.classList.remove('text-red-400');
+                }
+            }
+
+            updateScore(delta) {
+                this.score += delta;
+                if (this.score < 0) this.score = 0;
+                this.scoreDisplay.textContent = this.score.toString().padStart(4, '0');
+            }
+
+            loadCase(index) {
+                this.currentCaseIndex = index;
+                const curr = this.cases[index];
+
+                this.caseNumberBadge.textContent = `CASE #0${index + 1} / 05`;
+                this.caseTitleText.textContent = curr.title;
+                this.caseDescription.textContent = curr.desc;
+                this.equationDisplay.textContent = curr.displayStr;
+
+                this.answerInput.value = '';
+                this.feedbackBox.classList.add('hidden');
+            }
+
+            checkAnswer() {
+                const valStr = this.answerInput.value.trim();
+                if (!valStr) return;
+
+                const userVal = parseFloat(valStr);
+                if (isNaN(userVal)) return;
+
+                const currentCase = this.cases[this.currentCaseIndex];
+                this.totalAttempts++;
+
+                if (Math.abs(userVal - currentCase.x) < 0.001) {
+                    soundFX.playCorrect();
+                    this.handleCorrectAnswer(currentCase);
+                } else {
+                    soundFX.playWrong();
+                    this.wrongAttempts++;
+                    this.handleWrongAnswer(currentCase, userVal);
+                }
+            }
+
+            handleCorrectAnswer(currentCase) {
+                let basePoints = 200;
+                if (this.difficulty === 'MEDIUM') basePoints = 300;
+                if (this.difficulty === 'HARD') basePoints = 450;
+
+                const pts = basePoints + Math.min(50, this.timeLeft);
+                this.updateScore(pts);
+
+                this.unlockedClues.push({
+                    index: this.currentCaseIndex,
+                    name: currentCase.clueName,
+                    text: currentCase.clueText
+                });
+
+                this.updateClueBoard();
+
+                this.feedbackBox.className = "mt-3 p-3 rounded-xl border border-emerald-500/50 bg-emerald-950/40 text-emerald-300 text-xs sm:text-sm block shadow-lg";
+                this.feedbackBox.innerHTML = `
+                    <div class="flex items-center gap-1.5 font-bold text-emerald-400 mb-0.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                        破解成功！解答正確 (x = ${currentCase.x})
+                    </div>
+                    <p class="text-xs text-emerald-200/80">獲得情報：<span class="font-semibold text-amber-300">【${currentCase.clueName}】${currentCase.clueText}</span> (+${pts} 分)</p>
+                `;
+
+                setTimeout(() => {
+                    if (this.currentCaseIndex + 1 < this.casesCount) {
+                        this.loadCase(this.currentCaseIndex + 1);
+                    } else {
+                        this.triggerVictory();
+                    }
+                }, 1600);
+            }
+
+            handleWrongAnswer(currentCase, userVal) {
+                this.updateScore(-30);
+
+                const card = this.answerInput.closest('.bg-slate-900\\/95');
+                if (card) {
+                    card.classList.add('animate-shake');
+                    setTimeout(() => card.classList.remove('animate-shake'), 400);
+                }
+
+                const { a, b, c, x } = currentCase;
+                const bOp = b > 0 ? `減去 ${b}` : `加上 ${Math.abs(b)}`;
+                const step1Right = c - b;
+                const step1Str = `${a}x = ${c} ${b > 0 ? '-' : '+'} ${Math.abs(b)}  ⇒  ${a}x = ${step1Right}`;
+                const step2Str = `x = ${step1Right} ÷ (${a})  ⇒  x = ${x}`;
+
+                this.feedbackBox.className = "mt-3 p-3 rounded-xl border border-red-500/50 bg-red-950/40 text-red-200 text-xs sm:text-sm block shadow-lg";
+                this.feedbackBox.innerHTML = `
+                    <div class="text-red-400 font-bold mb-1.5 flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        計算有誤！x = ${userVal} 不符合方程式 (-30分)
+                    </div>
+                    <div class="bg-slate-950/80 p-2.5 rounded-lg border border-red-500/30 text-[11px] sm:text-xs space-y-1 font-mono">
+                        <p class="text-amber-400 font-sans font-semibold">🔍 逐步移項解析：</p>
+                        <p>原式：<span class="text-cyan-300">${currentCase.displayStr}</span></p>
+                        <p>步驟 1 (移項)：兩邊同${bOp} → <span class="text-slate-200">${step1Str}</span></p>
+                        <p>步驟 2 (求解)：兩邊同除以係數 (${a}) → <span class="text-emerald-400 font-bold">${step2Str}</span></p>
+                    </div>
+                `;
+            }
+
+            renderClueCards() {
+                this.cluesContainer.innerHTML = '';
+                for (let i = 0; i < this.casesCount; i++) {
+                    const card = document.createElement('div');
+                    card.id = `clue-card-${i}`;
+                    card.className = "detective-pin bg-slate-950 border border-slate-800 p-3 rounded-xl transition-all opacity-60";
+                    card.innerHTML = `
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-[10px] font-mono text-slate-500">線索卡 #0${i + 1}</span>
+                            <span class="stamp-classified text-[9px]">LOCKED</span>
+                        </div>
+                        <div class="text-xs font-semibold text-slate-400">???</div>
+                        <div class="text-[10px] text-slate-600 mt-0.5">破解 CASE #0${i + 1} 以解鎖...</div>
+                    `;
+                    this.cluesContainer.appendChild(card);
+                }
+            }
+
+            updateClueBoard() {
+                const count = this.unlockedClues.length;
+                this.clueProgressText.textContent = `${count} / ${this.casesCount} 線索`;
+
+                this.unlockedClues.forEach(clue => {
+                    const card = document.getElementById(`clue-card-${clue.index}`);
+                    if (card && !card.classList.contains('unlocked')) {
+                        card.classList.add('unlocked');
+                        card.className = "detective-pin bg-slate-950 border border-amber-500/40 p-3 rounded-xl transition-all shadow-md shadow-amber-500/5 glow-gold";
+                        card.innerHTML = `
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-[10px] font-mono text-amber-400 font-semibold">情報 #0${clue.index + 1}</span>
+                                <span class="stamp-solved text-[9px]">SOLVED</span>
+                            </div>
+                            <div class="text-xs font-bold text-amber-300">${clue.name}</div>
+                            <div class="text-[11px] text-slate-200 mt-1 font-mono bg-slate-900 p-2 rounded border border-slate-800">${clue.text}</div>
+                        `;
+                    }
+                });
+
+                const percent = (count / this.casesCount) * 100;
+                this.suspectStatusTitle.textContent = `嫌犯鎖定進度: ${percent}%`;
+
+                if (count === 5) {
+                    this.suspectStatusDesc.textContent = "🎯 身分完全鎖定！成功逮捕『千面狐』";
+                    this.suspectSilhouette.textContent = "🚨";
+                } else if (count >= 3) {
+                    this.suspectStatusDesc.textContent = "接近主腦身分！還原犯罪脈絡";
+                    this.suspectSilhouette.textContent = "👤";
+                } else if (count >= 1) {
+                    this.suspectStatusDesc.textContent = "已獲得外貌與作案時間線索";
+                    this.suspectSilhouette.textContent = "🔍";
+                }
+            }
+
+            triggerVictory() {
+                clearInterval(this.timerInterval);
+                soundFX.playVictory();
+
+                let maxTime = 180;
+                if (this.difficulty === 'EASY') maxTime = 240;
+                if (this.difficulty === 'HARD') maxTime = 150;
+
+                const timeUsed = maxTime - this.timeLeft;
+                const accuracy = Math.round(((this.casesCount) / (this.totalAttempts || 1)) * 100);
+
+                let rank = "見習偵探";
+                if (this.score >= 1200 && accuracy >= 80) rank = "👑 首席數學神探";
+                else if (this.score >= 850) rank = "🕵️ 資深密碼偵探";
+                else rank = "👮 警署巡警助手";
+
+                document.getElementById('victory-player-name').textContent = this.playerName;
+                document.getElementById('final-rank').textContent = rank;
+                document.getElementById('final-score').textContent = this.score;
+
+                const mins = Math.floor(this.timeLeft / 60);
+                const secs = this.timeLeft % 60;
+                document.getElementById('final-time').textContent = `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+                document.getElementById('final-accuracy').textContent = `${accuracy}%`;
+
+                this.leaderboard.addRecord(this.playerName, this.score, timeUsed, accuracy, this.difficulty);
+
+                document.getElementById('victory-modal').classList.remove('hidden');
+                startConfetti();
+            }
+
+            triggerGameOver() {
+                soundFX.playWrong();
+                document.getElementById('gameover-modal').classList.remove('hidden');
+            }
+        }
+
+        function startConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            canvas.classList.remove('hidden');
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const particles = [];
+            const colors = ['#f59e0b', '#06b6d4', '#10b981', '#ec4899', '#3b82f6'];
+
+            for (let i = 0; i < 110; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    size: Math.random() * 8 + 4,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    vx: Math.random() * 4 - 2,
+                    vy: Math.random() * 4 + 3,
+                    rotation: Math.random() * 360,
+                    vRot: Math.random() * 6 - 3
+                });
+            }
+
+            let animationFrame;
+            function render() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let alive = false;
+
+                particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.rotation += p.vRot;
+
+                    if (p.y < canvas.height) alive = true;
+
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate((p.rotation * Math.PI) / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+                    ctx.restore();
+                });
+
+                if (alive) animationFrame = requestAnimationFrame(render);
+            }
+
+            render();
+
+            setTimeout(() => {
+                cancelAnimationFrame(animationFrame);
+                canvas.classList.add('hidden');
+            }, 4500);
+        }
+
+        /* App Startup Initialization */
+        window.addEventListener('DOMContentLoaded', () => {
+            window.gameInstance = new GameEngine();
+        });
+    </script>
+</body>
+</html>
